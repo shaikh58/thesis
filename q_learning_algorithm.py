@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Nov 09 23:22:21 2016
-THIS REVISION:  25 Jan 2017
+THIS REVISION:  April 2017
 @author: Mustafa
 
 To run on Bash for Windows, first execute command 'export KMP_AFFINITY=disabled' before running
@@ -17,20 +17,19 @@ import matplotlib.pyplot as plt
 from itertools import product
 
 start = timeit.default_timer()
-''' this function imports the transition probability matrices calculated
-in 'trans_prob_mat_real.py'. It imports both the excel data, which will be used in the reward function
-as well as the transition matrices'''
 
 def import_trans_prob_mat():
-    #trans_prob_matrix = trans_prob_mat_real.ret_trans_matrix()[0]
+    ''' this function imports the transition probability matrices calculated
+in 'trans_mat_single_agent.py'. It imports both the excel data, which will be used in the reward function
+as well as the transition matrices'''
     imported_data = trans_mat_single_agent.ret_trans_matrix(22,23,24,25,26)
     imported_excel_data = imported_data[1]
     states_info = imported_data[2]
     raw_states_matrix_total = imported_data[4]
     return imported_excel_data, trans_mat_single_agent.ret_trans_matrix(22,23,24,25,26)[0], states_info,raw_states_matrix_total
 
-'''this function imports the comfort index code'''
 def import_comfort_index(Tint, Text_mm, v_air, Icl_min,Icl_max, Text_ymin, Text_ymax, M, Hu_int):
+    '''this function imports the comfort index code'''
     PMV = comfort_index.F_PMV(Tint, Text_mm, v_air, Icl_min,Icl_max, Text_ymin, Text_ymax, M, Hu_int)[0]
     return PMV
 
@@ -66,27 +65,17 @@ hu_ext =  imported_excel_data[4]
 int_temp_raw = imported_excel_data[1]
 co2_int = imported_excel_data[5]
 avg_num_ppl = imported_excel_data[6]
-#Take a representative external temperature for the ext_temp_raw part of the energy cost function calc
 
-
-#weight_array = np.array([np.zeros(50)])
-#R_sens = np.array(np.zeros_like(weight_array))
-#spl_array = len(weight_array[0]) - 1
-#comfort_value = np.array(np.zeros(375))
-#energy_cost = np.array(np.zeros(375))
-#R,Q both 75x6 matrices
-#ext_temp_rep = [24, 28, 32]
 actions = [22,23,24,25,26]
 #initialize the Q, R matrices
 Q = np.zeros((75,5))
 R = np.zeros_like(Q)
 gamma = 0.99
 #######################################################################
-
+#This block of code initializes temporary arrays for standard deviation and variance determinations later on
 Re = np.zeros_like(R)
 Re_newmodel = np.zeros_like(R)
 Rc = np.zeros_like(R)
-
 VAR_Re = np.zeros_like(R)
 VAR_Rc = np.zeros_like(R)
 test_pts = 50
@@ -97,38 +86,13 @@ sd_revsb = np.zeros_like(comfort_weights)
 var_revsb = np.zeros_like(comfort_weights)
 ########################################################################
 initial_state = np.random.choice(74)
-##############################################################################
-##############################################################################
-'''
-int_temp_defn = [22, 23, 24, 25, 26]
-num_ppl_defn = [0.1, 0.2, 0.3, 0.4, 0.5]
-ext_temp_defn = [0.01, 0.02, 0.03]
-ext_temp_dict = {0.01:18, 0.02:24, 0.03:28}
-
-states_list = np.zeros(75)
-getcontext().prec = 4
-
-a=0
-for i in range(len(int_temp_defn)):
-    for j in range(len(num_ppl_defn)):
-        for k in range(len(ext_temp_defn)):
-            states_list[a] = int_temp_defn[i] + num_ppl_defn[j] + ext_temp_defn[k]
-            states_list[a] = Decimal(states_list[a])/1
-            #states_list[a] = np.round(states_list[a], decimals = 2)
-            a+=1
-'''
-###############################################################################
-###############################################################################
 
 #average relative humidity is 54.15 (0.5415) which is used for now and average co2_int = 598 which is used for now
 
-#comfort_weight_raw = 298
-counter=0
 def compute_rewards(states_list,actions,avg_num_ppl,comfort_weight_raw):
   comfort_weight = comfort_weight_raw/avg_num_ppl 
-  #for z in xrange(len(comfort_weights)):
   ##########################-----------COST FUNCTION----------########################### 
-  ext_temp_rep = [18, 24, 28]
+  ext_temp_rep = [18, 24, 28]#Take a representative external temperature for the ext_temp_raw part of the energy cost function calc
   for i in xrange(len(R[:,1])):
       for j in xrange(len(R[1,:])):
           #delta_t = actions[j] - np.floor(states_list[i])
@@ -153,30 +117,20 @@ def compute_rewards(states_list,actions,avg_num_ppl,comfort_weight_raw):
               num_ppl = 22
           if num_ppl_obs ==5:
               num_ppl=30
-          '''INVESTIGATE COMFORT_VAlUE - IT NEVER SEEMS TO GO ABOVE OR BELOW 1'''
+                
           '''-----------HERE IS THE ENERGY COST AND THE COMFORT VALUE CALCULATION------------------'''
-          #energy_cost = np.round(((ext_temp_rel*16.8658779700868)+(54.15*1.40355493915398)+(np.floor(states_list[i])*-23.1657660308043)+(598.26*0.103228354531392)+actions[j]*(-12.39884587577)+298.627443186001))
           energy_cost = np.round(((ext_temp_rel*9.20269047720525)+(54.15*0.362094384564653)+(np.floor(states_list[i])*8.4172944349841)+(598.26*0.092321902035293)+actions[j]*(-17.8734109048992)+6.5059040794673))#NEWMODEL  
-          #print 'energy cost: ', energy_cost
+
           comfort_value = np.abs(import_comfort_index(np.floor(states_list[i]), ext_temp_rel, v_air, Icl_min,Icl_max, Text_ymin, Text_ymax, M, Hu_int))
-          #comfort_value = (import_comfort_index(np.floor(states_list[i]), ext_temp_rel, v_air, Icl_min,Icl_max, Text_ymin, Text_ymax, M, Hu_int) + 0.8*import_comfort_index(setpt_temp[j], ext_temp_rel, v_air, Icl_min,Icl_max, Text_ymin, Text_ymax, M, Hu_int))/2.0
-          #print 'comfort value: ',num_ppl*comfort_weight*comfort_value
-         
-          #if comfort_value[counter] > 1:
-             # print 'comfort_value: ', comfort_value, 'i:',i,' j: ', j
-          #NOTE: COMFORT VALUE EVALUATED AT CURRENT STATE, NOT NEXT STATE
-          #eq_weight = np.abs(energy_cost/comfort_value)
+
           '''----------HERE IS THE REWARD (COST) FUNCTION -----------------'''
           R[i,j] = float(energy_cost + num_ppl*comfort_weight*np.abs(comfort_value))
-          #Rc[i,j] = float(comfort_weights[z]*np.abs(comfort_value))
           Re[i,j] = float(energy_cost)
-          #Re_newmodel[i,j] = float(energy_cost_newmodel)
           Rc[i,j] = float(num_ppl*comfort_weight*np.abs(comfort_value))
-          #R[i,j] = float(0*energy_cost + np.abs(comfort_value))
-  #R = np.round(R,2)
   return R
 
 '''
+#this block of code visualizes the nature of the reward function in a heat map
 x = plt.pcolor(R,vmin=-500,vmax=500,cmap=plt.cm.coolwarm)        
 plt.colorbar(x)
 plt.xticks(range(6),('','22','23','24','25','26'))
@@ -185,6 +139,7 @@ plt.ylabel('State')
 '''
         
 ''' 
+#this is the block of code which computes the variance and standard deviation for determination of an appropriate comfort weight
 var_rcvsb[z] = np.var(Rc)
 sd_rcvsb[z] = np.std(Rc)
 sd_revsb[z] = np.std(Re)
@@ -214,33 +169,6 @@ equalizing_weight_sd = comfort_weights[np.where(sd_rcvsb==closest_points_sd[0])[
 equalizing_weight_var = comfort_weights[np.where(var_rcvsb==closest_points_var[0])[0][0]]
 #intersection = np.intersect1d(sd_rcvsb,sd_revsb)
 '''
-'''IGNORE THIS BLOCK OF COMMENTS: Sensitivity analysis: vary the weight linearly, and plot against any one value in the reward matrix
-to see how it changes. Also plot how the reward changes for each setpoint give one weight.
-Add another for loop and put the R[i,j] expression inside it, and then linspace for the weights.
-375 length vectors are made, each entry being an array of size len(weight_array); this is the number of
-weights for which the reward function is calculated. The state and action info can be gained by dividing the
-number from 0-375 by 4, and using the mod function; division result = i, mod result = j. The rewards for each action, state pair
-are then plotted for a variety of different weight values. The energy cost and comfort value in each iteration are also
-stored in their respective arrays.NOTE: THE FIRST ENTRY IN WEIGHT_ARRAY AND R_SENS IS A 0 ARRAY, SO
-INDEX I IN WEIGHT_ARRAY CORRESPONDS TO INDEX I-1 FOR COMFORT_VALUE AND ENERGY_COST'''
-
-        #weight_array = np.append(weight_array,[np.linspace(0,np.abs((energy_cost[counter]/comfort_value[counter]))*2, len(weight_array[0]))], axis=0)
-        #array_ij = np.zeros(len(weight_array[0]))
-        #for z in range(len(weight_array[0])-1):
-        #    array_ij[z] = energy_cost[counter] + weight_array[counter+1,z]*np.abs(comfort_value[counter])
-       # counter+=1
-        #R_sens = np.append(R_sens, [array_ij], axis=0)  #definition of the cost function
-
-'''
-x_axis = np.linspace(0,len(R[1,:]),len(R[1,:]))
-plt.plot(weight_array[375,0:spl_array], R_sens[375,0:spl_array]) #removes the last 0 point from R_sens in plot
-plt.plot( x_axis,R[1,:])
-'''
-        #if R[i,j] != 0:
-            #print R[i,j]
-   # for i in range(len(R)):
-   #     if R[:,i].any() == np.zeros_like(R[:,i]).any():
-      #      print 'R:', states_list[i]
 
 def find_next_action(available_actions_range):
     next_action = int(np.random.choice(actions, 1))
@@ -251,17 +179,7 @@ normalized_action = int(action - 22)
 
 
 def update_Q(R, alpha,current_state, actions, normalized_action, action, gamma, trans_mat_array):
-    #Rsa = R[current_state, action]
-    #Qsa = Q[current_state, action]
-    #Earliest method, 1.0:Next couple of lines find the next state by going to the same state
-    #as current state but with the new temperature setpoint (action) i.e.
-    # 25.12 -> 22.12 if the action = 22
-    #difference = np.floor(states_list[current_state]) - action
-    #next_state = states_list[current_state] - difference
-    #Second method, 1.1: The next state is chosen at random from the list of all possible states
-    #that have the internal temperature = action. E.g. current_state = 25.33,
-    #action = 22, then next_state chosen from all states with 22.XX
-    #possible_next_states needs to be reset to 0! or else each iteration will append to its entries!
+    '''this is the Q-value update function. The args are passed in and the Q-value is updated as per the Q-learning algorithm presented by Watkins, 1989'''
     possible_next_states = []
     next_state_prob = [] #the probabilities associated with each possible next state
     counter = 0
@@ -284,36 +202,20 @@ def update_Q(R, alpha,current_state, actions, normalized_action, action, gamma, 
             next_state_prob.append(trans_mat_array[normalized_action_alt][current_state][i])
         else:
           pass
-    #for i in range(len(states_list)):
-        #if np.floor(states_list[i]) == action:
-            #constrain the range of possible next states to those states with the same
-            #external temperature as the current state, as external temp most likely won't
-            #change drastically over a single time step
 
-            #if np.round((((states_list[i] % 1)*10) % 1)*10)== np.round((((states_list[current_state] % 1)*10) % 1)*10):
     '''next state chosen by generating a uniformly distributed random variable, with probabilities proportional to the probabilities given by the transition matrix'''
 
     next_state = np.random.choice(possible_next_states, p=next_state_prob)
     next_state = np.round_(next_state,2)
     next_state_norm = states_list_dict[next_state]
-    #print 'current_state:',current_state
-    #print 'next_state:',next_state
-    #print 'next_state_norm:', next_state_norm
-    #print 'normalized_action:',normalized_action
-    '''
-    CURRENTLY NEXT_STATE IS THE ACTUAL STATE SO NEED TO TRANSLATE TO NORMALIZED STATES;
-    LOOK UP IN STATES_DICT THEREFORE NEED TO PASS IN STATES_DICT TO THIS FUNCTION AS WELL'''
-    #Q[current_state, normalized_action] = R[current_state, normalized_action] + gamma*np.min(Q[next_state_norm,:])
-    '''Variation 1'''
+
+    #here is the actual Q-value update
     Q[current_state, normalized_action] = (1-alpha)*Q[current_state, normalized_action] + alpha*(R[current_state,normalized_action]+gamma*np.min(Q[next_state_norm,:]))
-    '''Variation 2''' 
-    #Q[current_state, normalized_action] = (1-alpha)*Q[current_state, normalized_action] + alpha*(R[current_state,normalized_action]+gamma*np.min(Q[next_state_norm,:])-Q[current_state, normalized_action])
-    '''Variation 3'''
-    #Q[current_state, normalized_action] = (1-alpha)*Q[current_state, normalized_action] + alpha*(R[current_state,normalized_action]+gamma*np.min(Q[next_state_norm,:]))
+
     return
 
 def train_Q(R,alpha_0, k_increment,num_iterations):
-  #train the Q matrix
+  ''' this function trains the Q matrix over num_iterations number of iterations'''
   sum_qrow1 = [0]
   sum_qrow2 = [0]
   sum_qrow3 = [0]
@@ -339,12 +241,7 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
   normalized_action = action - 22
   update_Q(R,alpha,initial_state, actions, normalized_action, action, gamma, trans_mat_array)
   epsilon=0.01
-  #num_iterations =300000
-  #k_increment = 0.1
-  #row_var = np.zeros(num_iterations)
-  #rowvar_diff = np.zeros(num_iterations)
-  #q_avg = np.zeros(num_iterations)
-  #q_avg_diff = np.zeros(num_iterations)
+
   for i in xrange(num_iterations):
       #for each iteration, choose a random state and a random action
       #row_var[i] = np.var(Q)
@@ -371,6 +268,7 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
       if i%20000 == 0:
         print "i= ", i
       if i>(5000*l) and i%(200*k) == 0:
+        '''the following block of code implements a smoothing technique to smoothen the Q-values. This is a customization that we made to deal with the issues arising with a sparse dataset'''
         for j in xrange(Q.shape[0]):
           if Q[j].all() == np.zeros_like(Q[j]).all():
             if counter == 0:
