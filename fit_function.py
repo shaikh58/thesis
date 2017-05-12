@@ -84,6 +84,8 @@ for k in xrange(len(int_temps)):
   r_matrix3[k] = R[states_list_dict[r_states3[k]]]
  
 """
+#this block of code implements a curve fitting function, which maps combinations of internal temperature and occupancy level, to optimal setpoint temperatures (using the Q-matrix). A function was required in order to generate a 3-D surface which showed the optimal policy dynamics. However, the 2-D heat maps showed the policy in a more intuitive manner, and so the 3-D maps were never used. The code has been left here for general interest
+
 coeffs = np.zeros(len(z)-1)
 def func(X,a,a1,b,b1,c,c1,d,d1,e,e1,e2,e3,e4,e5,g1,g2,g3,g4):
   x,y = X
