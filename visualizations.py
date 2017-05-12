@@ -1,65 +1,8 @@
-'''
-======================
-3D surface (color map)
-======================
-
-Demonstrates plotting a 3D surface colored with the coolwarm color map.
-The surface is made opaque by using antialiased=False.
-
-Also demonstrates using the LinearLocator and custom formatting for the
-z axis tick labels.
-'''
-
-#from mpl_toolkits.mplot3d import Axes3D
+#this file generates various visualizations of the nature of the optimal policy using heat maps in matplotlib. See the thesis document results section to see what these visualizations look like
 import matplotlib.pyplot as plt
-#from matplotlib import cm
-#from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 from fit_function import *
 
-#fig = plt.figure(figsize=(10,8))
-#ax = fig.gca(projection='3d')
-
-# Make data.
-
-#X = np.arange(-5, 5, 0.25)
-#Y = np.arange(-5, 5, 0.25)
-#X = np.array([22,23,24,25,26])
-#Y = np.array(range(len(X)))
-#X = np.array([22,22,22,22,22,23,23,23,23,23,24,24,24,24,24,25,25,25,25,25,26,26,26,26,26])
-
-#Y = np.array([1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5])
-#X, Y = np.meshgrid(X, Y)
-#R = np.sqrt(X**2 + Y**2)
-#Z = np.sin(R)
-#Z = fit_function.func_eval
-
-# Plot the surface.
-'''
-surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
-                       linewidth=0, antialiased=False)
-
-# Customize the z axis.
-#ax.set_zlim(-1.01, 1.01)
-
-ax.zaxis.set_major_locator(LinearLocator(10))
-ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-ax.set_zticks([22,23,24,25,26])
-ax.set_yticks([1,2,3,4,5])
-ax.set_xlabel('Internal temperature')
-ax.set_ylabel('Number of people')
-ax.set_zlabel('Optimal action')
-# Add a color bar which maps values to colors.
-fig.colorbar(surf, shrink=0.5, aspect=5)
-
-plt.show()
-
-#for i in xrange(len(X)-1):
-    #print fit_function.z[i],Z[i]
-'''
-#mean_squared_error = np.sum(np.power(z-Z, 2))/(2*len(Z))    
-#print 'mse: ', mean_squared_error
-#create a matrix Z which maps an x,y combination to a z value - i.e. Z[x,y]=z
 
 ''' the following block of code generates a 2 dimensional heat map displaying the optimal actions
 as a function of the internal temperature and occupancy level'''
@@ -158,10 +101,6 @@ for i in xrange(q_3d_tint_ext1.shape[0]):
 
 print 'External temperature: Low'
 
-#reward_display1 = plt.pcolor(r_matrix1,cmap='Reds')
-#plt.yticks(range(len(int_temps)),('22','23','24','25','26'))
-#plt.xlabel('Action (setpoint)')
-#plt.ylabel('Internal temperature')
 policy_vis1 = plt.pcolor(z_matrix1.T,vmin=22,vmax=26,cmap='Reds')
 plt.yticks(range(len(num_ppls)),('<7','7-13','13-18','19-24','>25'))
 plt.xticks(range(len(int_temps)),('22','23','24','25','26'))
@@ -169,10 +108,6 @@ plt.xlabel('Internal Temperature')
 plt.ylabel('Number of people')
 plt.colorbar(policy_vis1)
 plt.savefig("C:/Users/User/Thesis/newq_extended_data_new_energy_hvac2/policyvis_low_" + "iterations="+ str(iterations)+"_"+"weight"+str(comfort_weight_raw)+"_"+"k_increment=" + str(k_increment)+"_alpha0="+str(alpha_init)+ ".png")
-#plt.colorbar(reward_display1)
-#plt.savefig("C:/Users/User/Thesis/corrected_model_hvac1/3dsmoothing_epsilonstopping/policyvis1_" + str(iterations)+"_"+"weight"+str(comfort_weight)+ ".png")
-
-#plt.show()
 plt.gcf().clear()
 
 
@@ -186,15 +121,6 @@ plt.ylabel('Number of people')
 plt.colorbar(policy_vis2)
 plt.savefig("C:/Users/User/Thesis/newq_extended_data_new_energy_hvac2/policyvis_medium_" +"iterations="+ str(iterations)+"_"+"weight"+str(comfort_weight_raw)+"_"+"k_increment=" + str(k_increment)+"_alpha0="+str(alpha_init)+ ".png")
 #plt.savefig("C:/Users/User/Thesis/corrected_model_hvac1/3dsmoothing_epsilonstopping/policyvis2_" + str(iterations)+"_"+"weight"+str(comfort_weight)+ ".png")
-'''
-reward_display2 = plt.pcolor(r_matrix2,cmap='Reds')
-plt.yticks(range(len(int_temps)),('22','23','24','25','26'))
-plt.xlabel('Action (setpoint)')
-plt.ylabel('Internal temperature')
-plt.colorbar(reward_display2)
-plt.show()
-plt.gcf().clear()
-'''
 plt.gcf().clear()
 
 print 'External temperature: High'
@@ -207,13 +133,4 @@ plt.ylabel('Number of people')
 plt.colorbar(policy_vis3)
 plt.savefig("C:/Users/User/Thesis/newq_extended_data_new_energy_hvac2/policyvis_high_" + "iterations=" +  str(iterations)+"_"+"weight"+str(comfort_weight_raw)+"_"+"k_increment=" + str(k_increment)+"_alpha0="+str(alpha_init)+ ".png")
 #plt.savefig("C:/Users/User/Thesis/corrected_model_hvac1/3dsmoothing_epsilonstopping/policyvis3_" + str(iterations)+"_"+"weight"+str(comfort_weight)+ ".png")
-'''
-reward_display3 = plt.pcolor(r_matrix3,cmap='Reds')
-plt.xticks(range(len(int_temps)),('22','23','24','25','26'))
-plt.yticks(range(len(int_temps)),('22','23','24','25','26'))
-plt.xlabel('Action (setpoint)')
-plt.ylabel('Internal temperature')
-plt.colorbar(reward_display3)
-plt.show()
-'''
 plt.gcf().clear()
