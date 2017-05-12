@@ -48,32 +48,6 @@ def read_excel_data():
     avg_num_ppl = np.average(num_ppl_raw)
     return setpt_temp, int_temp_raw, num_ppl_raw, ext_temp_raw, hu_ext, co2_int, avg_num_ppl
 
-def compute_raw_states_matrix_alt(setpt_temp, int_temp_raw,setpt):
-    setpt_temp = np.array(setpt_temp) 
-    count = (setpt_temp==setpt).sum()
-    c=0
-    #print int_temp_raw[369]
-    int_temp_set= np.zeros(count)
-    modified_setpt22 = 0
-    for i in xrange(len(setpt_temp)):
-        if round(setpt_temp[i]) <22:
-            setpt_temp[i] = 22
-            modified_setpt22 += 1
-            int_temp_set = np.append(int_temp_set,0)
-        elif setpt_temp[i] > 26:
-            setpt_temp[i] = 26
-            int_temp_set = np.append(int_temp_set,0)
-        if setpt_temp[i] == setpt: 
-            int_temp_set[c] = int_temp_raw[i]
-            c+=1
-    for i in xrange(len(int_temp_set)):
-        if int_temp_set[i]<22:
-          int_temp_set[i] = 22
-        elif int_temp_set[i]>26:
-          int_temp_set[i] = 26        
-             
-    raw_states_matrix_alt = int_temp_set
-    return raw_states_matrix_alt
     
 def compute_raw_states_matrix(setpt_temp, int_temp_raw, num_ppl_raw, ext_temp_raw, setpt):
   
@@ -186,15 +160,6 @@ def compute_raw_states_matrix_total(setpt_temp, int_temp_raw, num_ppl_raw, ext_t
     raw_states_matrix = num_ppl_discset + int_temp_set + ext_temp_discset
     return raw_states_matrix, setpt_temp
     
-def normalize_data_alt(raw_states_matrix):
-    int_temp_defn = [22,23,24,25,26]
-    states_list_alt = range(len(int_temp_defn))
-    states_list_dict_alt = {22:0,23:1,24:2,25:3,26:4}
-    observed_states_disc_alt = np.zeros(len(raw_states_matrix))
-    for i in xrange(len(raw_states_matrix)):
-        raw_states_matrix[i] = Decimal(raw_states_matrix[i])/1
-        observed_states_disc_alt[i] = states_list_dict_alt[raw_states_matrix[i]]
-    return observed_states_disc_alt,states_list_alt,states_list_dict_alt
     
 def normalize_data(raw_states_matrix):
   states_list = np.zeros(75)
@@ -216,36 +181,12 @@ def normalize_data(raw_states_matrix):
               states_list_dict.update({states_list[a]: a})#this is a dictionary containing key value pairs of discretized state: original state e.g. {22.11:1, etc.}
               a+=1
 
-  '''can also use a hash table'''
   observed_states_disc = np.zeros(len(raw_states_matrix))
   for i in xrange(len(raw_states_matrix)):
       raw_states_matrix[i] = Decimal(raw_states_matrix[i])/1
       observed_states_disc[i] = states_list_dict[raw_states_matrix[i]]#makes use of O(1) lookup time of dict rather than iterating over states list and raw states vector
   return observed_states_disc,states_list,states_list_dict
-  
-def get_trans_matrix_alt(raw_states_matrix_alt):
-    normalized_data_alt = normalize_data_alt(raw_states_matrix_alt)
-    states_list_alt = normalized_data_alt[1]
-    observed_states_disc_alt = normalized_data_alt[0]
-    states_list_dict_alt = normalized_data_alt[2]
-    transition_matrix = np.zeros((len(states_list_alt),len(states_list_alt)))
-    for (x,y), c in Counter(zip(observed_states_disc_alt, observed_states_disc_alt[1:])).iteritems():
-        transition_matrix[x,y] = c
-    #this block normalizes the rows to sum to 1
-    trans_prob_matrix = transition_matrix
-    for i in xrange(len(transition_matrix)):
-        row_sum = np.sum(trans_prob_matrix[i])
-        for j in xrange(len(transition_matrix)):
-            if trans_prob_matrix[i,j] == 0:
-                trans_prob_matrix[i,j] = 0
-            else:
-                trans_prob_matrix[i,j] = trans_prob_matrix[i,j]/row_sum
-    counter=0
-    #print 'zero rows:'
-    for i in range(len(trans_prob_matrix)):
-            if trans_prob_matrix[:,i].any() == np.zeros_like(trans_prob_matrix[:,i]).any():
-                counter+=1
-    return trans_prob_matrix, states_list_alt, states_list_dict_alt
+ 
     
 def get_trans_matrix(raw_states_matrix):
     #this block constructs the transition matrix, before normalization
@@ -280,16 +221,7 @@ def get_trans_matrix(raw_states_matrix):
     print counter
     '''
     return trans_prob_matrix, states_list, states_list_dict
-
-
-def TDlearning_modelfree(raw_states_matrix):
-  normalized_data = normalize_data(raw_states_matrix)
-  states_list = normalized_data[1]
-  observed_states_disc = normalized_data[0]
-  states_list_dict = normalized_data[2]
   
-  
-    
     
 def checksum(trans_prob_matrix):
     #this function checks to see if all the rows sum to 1
@@ -297,17 +229,6 @@ def checksum(trans_prob_matrix):
         checksum = np.sum(trans_prob_matrix[i])
         if checksum != 1 and checksum != 0:
             print checksum
-
-def ret_trans_matrix_alt(setpt22,setpt23,setpt24, setpt25, setpt26):
-    excel_data = read_excel_data()
-    trans_mat22 = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt22))[0]
-    trans_mat23 = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt23))[0]
-    trans_mat24 = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt24))[0]
-    trans_mat25 = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt25))[0]
-    trans_mat26 = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt26))[0]
-    states_list_alt = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt26))[1]
-    states_list_dict_alt = get_trans_matrix_alt(compute_raw_states_matrix_alt(excel_data[0], excel_data[1],setpt26))[2]
-    return [trans_mat22, trans_mat23,trans_mat24, trans_mat25, trans_mat26], excel_data, [states_list_alt, states_list_dict_alt]
 
 def ret_trans_matrix(setpt22, setpt23, setpt24, setpt25, setpt26):
     #this function returns the transition probability matrix with the given inputs,
@@ -338,7 +259,7 @@ if __name__ == "__main__":
     #trans_mats = ret_trans_mat[0]
     #excel_data = ret_trans_mat[1]
     #states_list_dict = ret_trans_mat[2][1]
-    #raw_states_matrix_24 = compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2],                excel_data[3],24)
+    #raw_states_matrix_24 = compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],24)
     #ret_trans_mat_alt = ret_trans_matrix_alt(22,23,24,25,26)
     '''
     #trans_mat22 = ret_trans_mat[0][4]
