@@ -6,14 +6,11 @@ THIS REVISION:  April 2017
 
 To run on Bash for Windows, first execute command 'export KMP_AFFINITY=disabled' before running
 """
-
 import numpy as np
 import trans_mat_single_agent
 import comfort_index
 import timeit
 import matplotlib.pyplot as plt
-#from decimal import getcontext, Decimal
-
 from itertools import product
 
 start = timeit.default_timer()
@@ -215,7 +212,7 @@ def update_Q(R, alpha,current_state, actions, normalized_action, action, gamma, 
     return
 
 def train_Q(R,alpha_0, k_increment,num_iterations):
-  ''' this function trains the Q matrix over num_iterations number of iterations'''
+  #this function trains the Q matrix over num_iterations number of iterations
   sum_qrow1 = [0]
   sum_qrow2 = [0]
   sum_qrow3 = [0]
@@ -245,19 +242,19 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
   for i in xrange(num_iterations):
       #for each iteration, choose a random state and a random action
       #row_var[i] = np.var(Q)
-      ''' Epsilon greedy stopping approach
-      q_avg[i] = np.average(Q[44])
-      if i>0:
-        q_avg_diff[i] = q_avg[i] - q_avg[i-1]
-        #rowvar_diff[i] = row_var[i]-row_var[i-1]
-      if i>110000:
-      #if i>10000:
-        if q_avg_diff[i-1] < epsilon:
-        #if (np.abs(rowvar_diff[i])+np.abs(rowvar_diff[i-1])+np.abs(rowvar_diff[i-2])+np.abs(rowvar_diff[i-3]))/4.0 < epsilon:
-          print q_avg_diff[i]
-          #print (np.abs(rowvar_diff[i])+np.abs(rowvar_diff[i-1]))/3.0
-          break
-      '''
+#       Epsilon greedy stopping approach
+#       q_avg[i] = np.average(Q[44])
+#       if i>0:
+#         q_avg_diff[i] = q_avg[i] - q_avg[i-1]
+#         #rowvar_diff[i] = row_var[i]-row_var[i-1]
+#       if i>110000:
+#       #if i>10000:
+#         if q_avg_diff[i-1] < epsilon:
+#         #if (np.abs(rowvar_diff[i])+np.abs(rowvar_diff[i-1])+np.abs(rowvar_diff[i-2])+np.abs(rowvar_diff[i-3]))/4.0 < epsilon:
+#           print q_avg_diff[i]
+#           #print (np.abs(rowvar_diff[i])+np.abs(rowvar_diff[i-1]))/3.0
+#           break
+      
       current_state = np.random.randint(0, len(Q[:,1]))
       action = find_next_action(actions)
       normalized_action = action - 22
@@ -268,7 +265,7 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
       if i%20000 == 0:
         print "i= ", i
       if i>(5000*l) and i%(200*k) == 0:
-        '''the following block of code implements a smoothing technique to smoothen the Q-values. This is a customization that we made to deal with the issues arising with a sparse dataset'''
+        #the following block of code implements a smoothing technique to smoothen the Q-values. This is a customization that we made to deal with the issues arising with a sparse dataset
         for j in xrange(Q.shape[0]):
           if Q[j].all() == np.zeros_like(Q[j]).all():
             if counter == 0:
@@ -329,7 +326,7 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
                    Q[j] = 0.85*Q[j] +  0.15/2*(Q[j-1]+Q[j+1])
                  elif np.round((((states_list[j] % 1)*10) % 1)*10)==3:
                    Q[j] = 0.85*Q[j] +  0.15/2*(Q[j-2]+Q[j-1])
-
+      #this block of code appends average Q-values for vizualization purposes, i.e. to track the convergence of the Q-values
       sum_qrow1.append(np.average(Q[58,:]))
       sum_qrow2.append(np.average(Q[59,:]))
       sum_qrow3.append(np.average(Q[21,:]))
@@ -378,6 +375,7 @@ def test_opt_policy(Q,R,raw_states_matrix_complete,raw_action_set,states_list_di
   return raw_reward,optimal_reward,energy_raw_cost,energy_optimal_cost,comfort_raw_cost,comfort_optimal_cost
   
 def generate_cost_comparison(R,raw_states_matrix_complete,raw_action_set,states_list_dict,states_list,trans_mat_array,actions):
+    #this function newly trains the Q matrix several times to conduct a cost comparison between the current and optimal policy
   raw_reward_list = []
   optimal_reward_list = []
   energy_raw_cost_list = []
@@ -414,6 +412,7 @@ def compare_energy_costs(R,raw_states_matrix_complete,raw_action_set,states_list
   return energy_raw_cost_oldmodel, energy_raw_cost_newmodel 
 
 def display_optimal_policy(Q, trans_mat_array, test_state, actions):
+    #this function is the building block for running a simulation. The code for simulation has been omitted for brevity
   optimal_action = np.argmin(Q[test_state])
   possible_next_states = []
   next_state_prob = [] #the probabilities associated with each possible next state
@@ -428,7 +427,7 @@ def display_optimal_policy(Q, trans_mat_array, test_state, actions):
               test_state = np.random.randint(0, len(Q[:,1]))#pick a new current_state!
               counter = 0
               print 'the current state must be changed to:',  test_state
-  '''this block populates the next possible states by going through the transition matrix for the given setpoint. All occuring next states are appended into an array, along with their corresponding probabilities'''
+  #this block populates the next possible states by going through the transition matrix for the given setpoint. All occuring next states are appended into an array, along with their corresponding probabilities'''
   for i in xrange(len(trans_mat_array[optimal_action][test_state])):
         if trans_mat_array[optimal_action][test_state][i] != 0:
             possible_next_states.append(states_list[i])
@@ -436,21 +435,20 @@ def display_optimal_policy(Q, trans_mat_array, test_state, actions):
         else:
           pass
    
-  '''next state chosen by generating a uniformly distributed random variable, with probabilities proportional to the probabilities given by the transition matrix'''
+  #next state chosen by generating a uniformly distributed random variable, with probabilities proportional to the probabilities given by the transition matrix'''
   next_state = np.random.choice(possible_next_states, p=next_state_prob)
   next_state = np.round_(next_state,2)
   next_state_norm = states_list_dict[next_state]
   act_optimal_action = optimal_action + 22
   return act_optimal_action, next_state_norm
   
-'''this block displays the optimal policy over a sequence of states and actions'''
-
-#costs = compare_energy_costs(R,raw_states_matrix_complete,raw_action_set,states_list_dict,states_list,trans_mat_array,actions)
 
 #if __name__ == "__main__":
 
 R = compute_rewards(states_list,actions,avg_num_ppl,comfort_weight_raw=298)
 '''
+#this block of code plots the cost comparisons for energy cost, discomfort penalty cost, and total cost
+
 cost_set = generate_cost_comparison(R,raw_states_matrix_complete,raw_action_set,states_list_dict,states_list,trans_mat_array,actions)
 training_periods = range(5)
 plt.plot(training_periods,cost_set[2])
@@ -489,7 +487,7 @@ fig.tight_layout()
 plt.savefig("C:/Users/User/Thesis/newq_extended_data_new_energy_hvac2/cost_comparisons/total_costs_withpercent"+".png")
 plt.gcf().clear()
 '''
-
+#this block of code is to simply keep track of important variables such as final learning rate, number of training iterations before stopping etc
 Q_tuple = train_Q(R,alpha_0=1.0,k_increment=0.1,num_iterations=200000)
 Q = Q_tuple[0]
 Q = Q.astype(int)
@@ -498,84 +496,6 @@ alpha_init = Q_tuple[3]
 terminal_i = Q_tuple[1]
 num_iterations = Q_tuple[16]
 print 'terminating i:', terminal_i
-'''
-#costs = test_opt_policy(Q,R,raw_states_matrix_complete,raw_action_set,states_list_dict,states_list,trans_mat_array,actions)
-#Q = (Q/np.max(Q)*100)
-#sum_qrow1 = np.absolute(sum_qrow1)
-x_axis = np.linspace(0,terminal_i,terminal_i+2)
-#putting 2 consecutive lines of plt.plot, plots both lines on the same graph. plt.show separates two different graphs
-plt.plot(x_axis,Q_tuple[4])
-plt.plot(x_axis, Q_tuple[5])
-plt.plot(x_axis,Q_tuple[12])
-plt.plot(x_axis, Q_tuple[13])
-#plt.savefig("C:/Users/User/.spyder/thesis_plots/fig1.png")
-plt.legend(['State 58', 'State 59','State 6','State 7'], loc='best')
-plt.xlabel('Iterations')
-plt.ylabel('Average Q-value')
-plt.savefig("C:/Users/User/Thesis/newq_extended_data_new_energy_hvac2/convergence_"+"iterations="+str(num_iterations)+"_alpha0="+str(alpha_init)+"k_increment=0.1"+".png")
-plt.show()
-plt.gcf().clear()
-'''
-
-test_state = 18
-state_reached = []
-action_taken = []
-state_reached.append(test_state)
-
-for j in xrange(1000):
-  act_optimal_action = display_optimal_policy(Q,trans_mat_array,test_state,actions)[0]
-  next_state_norm = display_optimal_policy(Q,trans_mat_array,test_state,actions)[1]
-  state_reached.append(next_state_norm)
-  action_taken.append(act_optimal_action)
-  test_state = next_state_norm
-  
-state_reached = np.array(state_reached)
-action_taken = np.array(action_taken)  
-
-fullstate_reached = np.zeros_like(state_reached,dtype=np.float64)
-for k in xrange(len(state_reached)):
-    fullstate_reached[k] =states_list[state_reached[k]]
-x_axis2 = np.linspace(0,j+1,j+1)
-#-----------------------#############---------------------------#
-'''this block creates a plot with 2 y-axes on a single plot, showing the states reached
-and the actions taken'''
-
-fig, ax1 = plt.subplots(figsize=(10,8))#can change the actual size of the plot (inches)
-t = x_axis2
-ax1.plot(t, fullstate_reached[:j+1], 'b.')
-ax1.set_xlabel('time step')
-# Make the y-axis label, ticks and tick labels match the line color.
-ax1.set_ylabel('current state', color='b')
-ax1.tick_params('y', colors='b')
-plt.yticks('') #specifies the step for the y axis 
-ax2 = ax1.twinx()
-ax2.plot(t, action_taken, 'r.')
-ax2.set_ylabel('action taken', color='r')
-ax2.tick_params('y', colors='r')
-#plt.xticks(range(len(t)))#specify that the x axis should be scaled by integer values
-plt.yticks([22,23,24,25,26])
-fig.tight_layout()
-plt.show()
-
-#-------------------------#############--------------------------#
-
-'''
-plt.plot(x_axis,sum_qrow3)
-plt.plot(x_axis, sum_qrow4)
-plt.plot(x_axis,sum_qrow11)
-plt.plot(x_axis, sum_qrow12)
-plt.legend(['avg. state 21', 'avg state 22','avg state 65','avg state 66'], loc='best')
-plt.show()
-
-plt.plot(x_axis,sum_qrow5)
-plt.plot(x_axis, sum_qrow6)
-plt.legend(['avg. state 44', 'avg state 45'], loc='best')
-plt.show()
-plt.plot(x_axis,sum_qrow7)
-plt.plot(x_axis, sum_qrow8)
-plt.legend(['avg. state 2', 'avg state 3'], loc='best')
-plt.show()
-'''
 
 stop = timeit.default_timer()
 
