@@ -36,9 +36,6 @@ all_imported_data = import_trans_prob_mat()
 all_trans_mat = all_imported_data[1]
 trans_mat22 = all_trans_mat[0]
 trans_mat23 = all_trans_mat[1]
-trans_mat24 = all_trans_mat[2]
-trans_mat25 = all_trans_mat[3]
-trans_mat26 = all_trans_mat[4]
 trans_mat_array = [trans_mat22, trans_mat23, trans_mat24, trans_mat25, trans_mat26]
 #get a list of all the possible states, and a dictionary as well
 states_info = all_imported_data[2]
@@ -47,13 +44,9 @@ states_list_dict = states_info[1]
 raw_states_matrix_complete = all_imported_data[3][0]
 raw_action_set = all_imported_data[3][1]
 
-
 imported_excel_data = all_imported_data[0]
 ext_temp_raw = imported_excel_data[3]
 hu_ext =  imported_excel_data[4]
-int_temp_raw = imported_excel_data[1]
-co2_int = imported_excel_data[5]
-avg_num_ppl = imported_excel_data[6]
 
 actions = [22,23,24,25,26]
 #initialize the Q, R matrices
@@ -93,23 +86,12 @@ def compute_rewards(states_list,actions,avg_num_ppl,comfort_weight_raw):
           Rc[i,j] = float(num_ppl*comfort_weight*np.abs(comfort_value))
   return R
 
-'''
-#this block of code visualizes the nature of the reward function in a heat map
-x = plt.pcolor(R,vmin=-500,vmax=500,cmap=plt.cm.coolwarm)        
-plt.colorbar(x)
-plt.xticks(range(6),('','22','23','24','25','26'))
-plt.xlabel('Action (setpoint)')
-plt.ylabel('State')
-'''
-       
-
 def find_next_action(available_actions_range):
     next_action = int(np.random.choice(actions, 1))
     return next_action
 
 action = find_next_action(actions)
 normalized_action = int(action - 22)
-
 
 def update_Q(R, alpha,current_state, actions, normalized_action, action, gamma, trans_mat_array):
     '''this is the Q-value update function. The args are passed in and the Q-value is updated as per the Q-learning algorithm presented by Watkins, 1989'''
@@ -149,11 +131,6 @@ def update_Q(R, alpha,current_state, actions, normalized_action, action, gamma, 
 
 def train_Q(R,alpha_0, k_increment,num_iterations):
   #this function trains the Q matrix over num_iterations number of iterations
-  sum_qrow1 = [0]
-  sum_qrow2 = [0]
-  sum_qrow3 = [0]
-  sum_qrow4 = [0]
-  
   l = 1
   k = 5
   init_zero_rows = []
@@ -204,12 +181,7 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
                     elif np.round((((states_list[j] % 1)*10) % 1)*10)==3:
                       Q[j] =  1/4*(Q[j-3]+Q[j+3]) + 1/4*(Q[j-2]+Q[j-1])
                   except:
-                    if np.round((((states_list[j] % 1)*10) % 1)*10)==1:
-                      Q[j] =  1/2*(Q[j+1]+Q[j+2])
-                    elif np.round((((states_list[j] % 1)*10) % 1)*10)==2:
-                      Q[j] =  1/2*(Q[j-1]+Q[j+1])
-                    elif np.round((((states_list[j] % 1)*10) % 1)*10)==3:
-                      Q[j] =  1/2*(Q[j-2]+Q[j-1])     
+                    pass    
         counter+=1
         if counter>0:
          for j in init_zero_rows:#for all rows which need to be smoothened
@@ -232,21 +204,11 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
                    Q[j] = 0.85*Q[j] +  0.075/2*(Q[j-3]+Q[j+3]) + 0.075/2*(Q[j-1]+Q[j+1])
                  elif np.round((((states_list[j] % 1)*10) % 1)*10)==3:
                    Q[j] = 0.85*Q[j] +  0.075/2*(Q[j-3]+Q[j+3]) + 0.075/2*(Q[j-2]+Q[j-1])
-                   
-               except:# if we can't even do a 2 directional smoothing, do a 1 directional smoothing, in the direction of external temperature
-                 if np.round((((states_list[j] % 1)*10) % 1)*10)==1:
-                   Q[j] = 0.85*Q[j] +  0.15/2*(Q[j+1]+Q[j+2])
-                 elif np.round((((states_list[j] % 1)*10) % 1)*10)==2:
-                   Q[j] = 0.85*Q[j] +  0.15/2*(Q[j-1]+Q[j+1])
-                 elif np.round((((states_list[j] % 1)*10) % 1)*10)==3:
-                   Q[j] = 0.85*Q[j] +  0.15/2*(Q[j-2]+Q[j-1])
-      #this block of code appends average Q-values for vizualization purposes, i.e. to track the convergence of the Q-values
-      sum_qrow1.append(np.average(Q[58,:]))
-      sum_qrow2.append(np.average(Q[59,:]))
-      sum_qrow3.append(np.average(Q[21,:]))
-      sum_qrow4.append(np.average(Q[22,:]))
+               except:
+                 pass
+ 
       
-  return Q,i,alpha,alpha_0,sum_qrow1,sum_qrow2,sum_qrow3,sum_qrow4
+  return Q,i,alpha,alpha_0
   
 def test_opt_policy(Q,R,raw_states_matrix_complete,raw_action_set,states_list_dict,states_list,trans_mat_array,actions):
   raw_reward = 0
@@ -260,9 +222,6 @@ def test_opt_policy(Q,R,raw_states_matrix_complete,raw_action_set,states_list_di
   temp1 = display_optimal_policy(Q,trans_mat_array,states_list_dict[round(initial_state,2)],actions)
   optimal_reward+= R[initial_state,temp1[0]-22]
   energy_raw_cost += Re[initial_state,raw_action_set[0]-22]
-  energy_optimal_cost += Re[initial_state,temp1[0]-22]
-  comfort_raw_cost += Rc[initial_state,raw_action_set[0]-22]
-  comfort_optimal_cost +=  Rc[initial_state,temp1[0]-22]
   raw_reward+=R[states_list_dict[round(initial_state,2)],raw_action_set[0]-22]
   optimal_state= temp1[1]
   for i in xrange(1,len(raw_states_matrix_complete)):
