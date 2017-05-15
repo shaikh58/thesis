@@ -92,16 +92,6 @@ def compute_raw_states_matrix(setpt_temp, int_temp_raw, num_ppl_raw, ext_temp_ra
                 num_ppl_discset[i] = 0.4
             elif num_ppl_set[i]>=25:
                 num_ppl_discset[i] = 0.5
-            if ext_temp_set[i] <22:
-                ext_temp_discset[i] = 0.01
-            elif 22<= ext_temp_set[i]<=26:
-                ext_temp_discset[i] = 0.02
-            elif ext_temp_set[i] >26:
-                ext_temp_discset[i] = 0.03
-            if int_temp_set[i]<22:
-                int_temp_set[i] = 22
-            elif int_temp_set[i]>26:
-                int_temp_set[i] = 26
         else:
             sys.exit("Program terminated due to invalid data type")
     raw_states_matrix = num_ppl_discset + int_temp_set + ext_temp_discset
@@ -171,12 +161,6 @@ def ret_trans_matrix(setpt22, setpt23, setpt24, setpt25, setpt26):
     raw_states_matrix_total = compute_raw_states_matrix_total(excel_data[0], excel_data[1], excel_data[2], excel_data[3])
     trans_mat22 = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt22))[0]
     trans_mat23 = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt23))[0]
-    trans_mat24 = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt24))[0]
-    trans_mat25 = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt25))[0]
-    trans_mat26 = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt26))[0]
-    states_list = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt26))[1]
-    states_list_dict = get_trans_matrix(compute_raw_states_matrix(excel_data[0], excel_data[1], excel_data[2], excel_data[3],setpt26))[2]
-    num_ppl_avg = excel_data[6]
     
     return [trans_mat22, trans_mat23,trans_mat24, trans_mat25, trans_mat26], excel_data, [states_list, states_list_dict], num_ppl_avg,raw_states_matrix_total
 
