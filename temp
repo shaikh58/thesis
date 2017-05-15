@@ -30,14 +30,6 @@ def import_comfort_index(Tint, Text_mm, v_air, Icl_min,Icl_max, Text_ymin, Text_
     PMV = comfort_index.F_PMV(Tint, Text_mm, v_air, Icl_min,Icl_max, Text_ymin, Text_ymax, M, Hu_int)[0]
     return PMV
 
-v_air=0.1
-Icl_min=0.5*0.15
-Icl_max=1.0*0.15
-Text_ymin=0
-Text_ymax=27
-M=1.4*58
-Hu_int=0.5415
-
 #define local variables for all 5 transition probability matrices
 all_imported_data = import_trans_prob_mat()
 
@@ -89,15 +81,6 @@ def compute_rewards(states_list,actions,avg_num_ppl,comfort_weight_raw):
           #Choose a representative population number
           num_ppl_obs = np.round((states_list[i]%1)*10)
           if num_ppl_obs == 1:
-              num_ppl = 4
-          if num_ppl_obs ==2:
-              num_ppl = 9
-          if num_ppl_obs ==3:
-              num_ppl = 15
-          if num_ppl_obs ==4:
-              num_ppl = 22
-          if num_ppl_obs ==5:
-              num_ppl=30
                 
           '''-----------HERE IS THE ENERGY COST AND THE COMFORT VALUE CALCULATION------------------'''
           energy_cost = np.round(((ext_temp_rel*9.20269047720525)+(54.15*0.362094384564653)+(np.floor(states_list[i])*8.4172944349841)+(598.26*0.092321902035293)+actions[j]*(-17.8734109048992)+6.5059040794673))#NEWMODEL  
@@ -186,20 +169,6 @@ def train_Q(R,alpha_0, k_increment,num_iterations):
 
   for i in xrange(num_iterations):
       #for each iteration, choose a random state and a random action
-      #row_var[i] = np.var(Q)
-#       Epsilon greedy stopping approach
-#       q_avg[i] = np.average(Q[44])
-#       if i>0:
-#         q_avg_diff[i] = q_avg[i] - q_avg[i-1]
-#         #rowvar_diff[i] = row_var[i]-row_var[i-1]
-#       if i>110000:
-#       #if i>10000:
-#         if q_avg_diff[i-1] < epsilon:
-#         #if (np.abs(rowvar_diff[i])+np.abs(rowvar_diff[i-1])+np.abs(rowvar_diff[i-2])+np.abs(rowvar_diff[i-3]))/4.0 < epsilon:
-#           print q_avg_diff[i]
-#           #print (np.abs(rowvar_diff[i])+np.abs(rowvar_diff[i-1]))/3.0
-#           break
-      
       current_state = np.random.randint(0, len(Q[:,1]))
       action = find_next_action(actions)
       normalized_action = action - 22
@@ -333,21 +302,6 @@ def generate_cost_comparison(R,raw_states_matrix_complete,raw_action_set,states_
     comfort_optimal_cost_list.append(costs[5])
   return raw_reward_list,optimal_reward_list,energy_raw_cost_list,energy_optimal_cost_list,comfort_raw_cost_list,comfort_optimal_cost_list
 
-def compare_energy_costs(R,raw_states_matrix_complete,raw_action_set,states_list_dict,states_list,trans_mat_array,actions):
-  energy_raw_cost_oldmodel = 0
-  energy_raw_cost_newmodel = 0
-  initial_state = raw_states_matrix_complete[0]
-  energy_raw_cost_oldmodel += Re[initial_state,raw_action_set[0]-22]
-  energy_raw_cost_newmodel += Re_newmodel[initial_state,raw_action_set[0]-22]
-
-  for i in xrange(1,len(raw_states_matrix_complete)):
-    state = states_list_dict[round(raw_states_matrix_complete[i],2)]
-    action = raw_action_set[i]
-    energy_raw_cost_oldmodel += Re[state,action-22]
-    energy_raw_cost_newmodel += Re_newmodel[state,action-22]
-
-  return energy_raw_cost_oldmodel, energy_raw_cost_newmodel 
-
 def display_optimal_policy(Q, trans_mat_array, test_state, actions):
     #this function is the building block for running a simulation. The code for simulation has been omitted for brevity
   optimal_action = np.argmin(Q[test_state])
@@ -402,8 +356,6 @@ plt.gcf().clear()
 total_reward_raw = np.array(cost_set[0])
 total_reward_optimal = np.array(cost_set[1])
 total_reward_percentage = (total_reward_optimal/total_reward_raw)*100
-
-
 
 stop = timeit.default_timer()
 
